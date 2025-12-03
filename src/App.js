@@ -26,6 +26,54 @@ const calculateDaysRemaining = (deadline) => {
   return diff;
 };
 
+// ============ HOOK PER SINCRONITZACIÓ ENTRE PESTANYES ============
+
+const useLocalStorageSync = (key, initialValue) => {
+  const [value, setValue] = useState(() => {
+    const stored = localStorage.getItem(key);
+    try {
+      return stored ? JSON.parse(stored) : initialValue;
+    } catch (e) {
+      console.error(`Error parsing ${key}:`, e);
+      return initialValue;
+    }
+  });
+
+  useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === key && e.newValue !== null) {
+        try {
+          const newValue = JSON.parse(e.newValue);
+          if (JSON.stringify(value) !== JSON.stringify(newValue)) {
+            setValue(newValue);
+          }
+        } catch (err) {
+          console.error(`Error parsing ${key} from storage:`, err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, [key, value]);
+
+  const setStoredValue = (newValue) => {
+    const valueToStore = newValue instanceof Function ? newValue(value) : newValue;
+    setValue(valueToStore);
+    localStorage.setItem(key, JSON.stringify(valueToStore));
+    
+    // Forçar actualització en altres pestanyes
+    localStorage.setItem('pipeline-sync-timestamp', Date.now().toString());
+  };
+
+  return [value, setStoredValue];
+};
+
+// ============ COMPONENTS ============
+
 // Component per mostrar comentaris
 function CommentsPanel({ assetId, comments, currentUser, onAddComment, darkMode }) {
   const [newComment, setNewComment] = useState('');
@@ -614,15 +662,28 @@ function AdminLogin({ onLogin, darkMode }) {
               </div>
             </button>
           </div>
-        </form>
-        
-        // Simplemente elimina o comenta esa línea en tu App.js
-        {/* 
-        <p className={`text-xs text-center mt-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-          Contrasenya per defecte: <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">admin123</code>
-        </p>
-        */}
+        </form> 
       </div>
+    </div>
+  );
+}
+
+// Component per notificar sincronització
+function SyncNotification({ darkMode, onDismiss }) {
+  const [show, setShow] = useState(true);
+
+  const handleDismiss = () => {
+    setShow(false);
+    onDismiss?.();
+  };
+
+  if (!show) return null;
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 animate-pulse ${darkMode ? 'bg-green-800 text-green-100' : 'bg-green-100 text-green-800'} px-4 py-3 rounded-lg shadow-lg flex items-center gap-3`}>
+      <div className="w-3 h-3 bg-green-500 rounded-full animate-ping"></div>
+      <span>✓ Dades actualitzades</span>
+      <button onClick={handleDismiss} className="ml-2 text-lg font-bold">&times;</button>
     </div>
   );
 }
@@ -633,7 +694,6 @@ function AdminConfigModal({ users, setUsers, roles, setRoles, assets, setAssets,
   const [activeTab, setActiveTab] = useState('reorder');
 
   useEffect(() => {
-    // Carregar les categories desades
     const savedTypes = localStorage.getItem('pipeline-asset-types');
     if (savedTypes) {
       try {
@@ -643,11 +703,6 @@ function AdminConfigModal({ users, setUsers, roles, setRoles, assets, setAssets,
       }
     }
   }, []);
-
-  useEffect(() => {
-    // Guardar les categories
-    localStorage.setItem('pipeline-asset-types', JSON.stringify(assetTypes));
-  }, [assetTypes]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -749,11 +804,76 @@ function AdminConfigModal({ users, setUsers, roles, setRoles, assets, setAssets,
   );
 }
 
+// Component per notes d'asset
+function AssetNotesSection({ assetId, assetType, notes, currentUser, onAddNote, darkMode }) {
+  const [newNote, setNewNote] = useState('');
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (newNote.trim()) {
+      onAddNote(assetId, newNote);
+      setNewNote('');
+    }
+  };
+
+  const filteredNotes = notes.filter(note => note.type === assetType);
+
+  return (
+    <div className={`p-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
+      <h4 className={`font-semibold mb-2 text-sm flex items-center gap-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
+        📝 Notes per {assetType}
+      </h4>
+      
+      <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
+        {filteredNotes.map((note, index) => (
+          <div key={index} className={`p-2 rounded text-sm ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
+            <div className="flex justify-between items-start mb-1">
+              <span className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{note.user}</span>
+              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                {new Date(note.timestamp).toLocaleString('ca-ES')}
+              </span>
+            </div>
+            <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{note.text}</p>
+          </div>
+        ))}
+        {filteredNotes.length === 0 && (
+          <p className={`text-center py-2 text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
+            No hi ha notes per aquest {assetType.toLowerCase()}
+          </p>
+        )}
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex gap-2">
+        <input
+          type="text"
+          value={newNote}
+          onChange={(e) => setNewNote(e.target.value)}
+          placeholder={`Escriu una nota per aquest ${assetType.toLowerCase()}...`}
+          className={`flex-1 px-3 py-2 border rounded text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white'}`}
+        />
+        <button
+          type="submit"
+          className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 flex items-center gap-1"
+          title="Enviar nota"
+        >
+          <Send size={14} />
+        </button>
+      </form>
+    </div>
+  );
+}
+
+// ============ COMPONENT PRINCIPAL ============
+
 export default function PipelineTracker() {
-  const [assets, setAssets] = useState([]);
-  const [users, setUsers] = useState(['Admin', 'Artista 1', 'Artista 2', 'Artista 3']);
-  const [roles, setRoles] = useState(['Modeling', 'UVs', 'Surfacing', 'Rigging', 'Animation', 'Lighting', 'Compositing']);
-  const [assetTypes, setAssetTypes] = useState(['Props', 'Personatges', 'Environments', 'Shots']);
+  // Estats sincronitzats entre pestanyes
+  const [assets, setAssets] = useLocalStorageSync('pipeline-assets', []);
+  const [users, setUsers] = useLocalStorageSync('pipeline-users', ['Admin', 'Artista 1', 'Artista 2', 'Artista 3']);
+  const [roles, setRoles] = useLocalStorageSync('pipeline-roles', ['Modeling', 'UVs', 'Surfacing', 'Rigging', 'Animation', 'Lighting', 'Compositing']);
+  const [assetTypes, setAssetTypes] = useLocalStorageSync('pipeline-asset-types', ['Props', 'Personatges', 'Environments', 'Shots']);
+  const [assetNotes, setAssetNotes] = useLocalStorageSync('pipeline-asset-notes', {});
+  
+  // Estats locals (no es sincronitzen)
   const [currentUser, setCurrentUser] = useState('Admin');
   const [showModal, setShowModal] = useState(false);
   const [showAdminConfig, setShowAdminConfig] = useState(false);
@@ -764,41 +884,12 @@ export default function PipelineTracker() {
   const [filterUser, setFilterUser] = useState('all');
   const [darkMode, setDarkMode] = useState(false);
   const [isAdminAuthenticated, setIsAdminAuthenticated] = useState(false);
-  const [assetNotes, setAssetNotes] = useState({});
+  const [showSyncNotification, setShowSyncNotification] = useState(false);
 
-  // Carregar dades i preferències
+  // Carregar preferències (no sincronitzades)
   useEffect(() => {
-    const savedAssets = localStorage.getItem('pipeline-assets');
-    const savedUsers = localStorage.getItem('pipeline-users');
-    const savedRoles = localStorage.getItem('pipeline-roles');
     const savedDarkMode = localStorage.getItem('pipeline-darkmode');
     const savedAdminAuth = localStorage.getItem('pipeline-admin-auth');
-    const savedAssetTypes = localStorage.getItem('pipeline-asset-types');
-    const savedAssetNotes = localStorage.getItem('pipeline-asset-notes');
-    
-    if (savedAssets) {
-      try {
-        setAssets(JSON.parse(savedAssets));
-      } catch (e) {
-        console.log('Error parsing assets:', e);
-      }
-    }
-    
-    if (savedUsers) {
-      try {
-        setUsers(JSON.parse(savedUsers));
-      } catch (e) {
-        console.log('Error parsing users:', e);
-      }
-    }
-    
-    if (savedRoles) {
-      try {
-        setRoles(JSON.parse(savedRoles));
-      } catch (e) {
-        console.log('Error parsing roles:', e);
-      }
-    }
     
     if (savedDarkMode) {
       setDarkMode(JSON.parse(savedDarkMode));
@@ -807,37 +898,9 @@ export default function PipelineTracker() {
     if (savedAdminAuth) {
       setIsAdminAuthenticated(JSON.parse(savedAdminAuth));
     }
-    
-    if (savedAssetTypes) {
-      try {
-        setAssetTypes(JSON.parse(savedAssetTypes));
-      } catch (e) {
-        console.log('Error parsing asset types:', e);
-      }
-    }
-    
-    if (savedAssetNotes) {
-      try {
-        setAssetNotes(JSON.parse(savedAssetNotes));
-      } catch (e) {
-        console.log('Error parsing asset notes:', e);
-      }
-    }
   }, []);
 
-  // Guardar dades
-  useEffect(() => {
-    localStorage.setItem('pipeline-assets', JSON.stringify(assets));
-  }, [assets]);
-
-  useEffect(() => {
-    localStorage.setItem('pipeline-users', JSON.stringify(users));
-  }, [users]);
-
-  useEffect(() => {
-    localStorage.setItem('pipeline-roles', JSON.stringify(roles));
-  }, [roles]);
-
+  // Guardar preferències (no sincronitzades)
   useEffect(() => {
     localStorage.setItem('pipeline-darkmode', JSON.stringify(darkMode));
   }, [darkMode]);
@@ -846,13 +909,21 @@ export default function PipelineTracker() {
     localStorage.setItem('pipeline-admin-auth', JSON.stringify(isAdminAuthenticated));
   }, [isAdminAuthenticated]);
 
+  // Escoltar canvis sincronitzats i mostrar notificació
   useEffect(() => {
-    localStorage.setItem('pipeline-asset-types', JSON.stringify(assetTypes));
-  }, [assetTypes]);
+    const handleStorageChange = (e) => {
+      if (e.key === 'pipeline-sync-timestamp') {
+        setShowSyncNotification(true);
+        setTimeout(() => setShowSyncNotification(false), 3000);
+      }
+    };
 
-  useEffect(() => {
-    localStorage.setItem('pipeline-asset-notes', JSON.stringify(assetNotes));
-  }, [assetNotes]);
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
 
   // Convertir assets antics automàticament
   useEffect(() => {
@@ -886,7 +957,7 @@ export default function PipelineTracker() {
       
       setAssets(convertedAssets);
     }
-  }, [assets]);
+  }, [assets, setAssets]);
 
   // Funció per assegurar stageDetails
   const ensureStageDetails = (asset) => {
@@ -929,7 +1000,11 @@ export default function PipelineTracker() {
       comments: [],
       issues: []
     };
-    setAssets([...assets, newAsset]);
+    
+    const updatedAssets = [...assets, newAsset];
+    setAssets(updatedAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 3000);
   };
 
   const updateAsset = (id, updates) => {
@@ -958,12 +1033,17 @@ export default function PipelineTracker() {
       }
       return asset;
     });
+    
     setAssets(newAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 3000);
   };
 
   const deleteAsset = (id) => {
     const newAssets = assets.filter(asset => asset.id !== id);
     setAssets(newAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 3000);
   };
 
   const updateStageDetails = (assetId, stage, updates) => {
@@ -993,7 +1073,10 @@ export default function PipelineTracker() {
       }
       return asset;
     });
+    
     setAssets(newAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 2000);
   };
 
   const addComment = (assetId, commentText) => {
@@ -1013,7 +1096,10 @@ export default function PipelineTracker() {
       }
       return asset;
     });
+    
     setAssets(newAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 2000);
   };
 
   const addIssue = (assetId, issueDescription, stage) => {
@@ -1034,7 +1120,10 @@ export default function PipelineTracker() {
       }
       return asset;
     });
+    
     setAssets(newAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 2000);
   };
 
   const resolveIssue = (assetId, issueIndex) => {
@@ -1056,7 +1145,10 @@ export default function PipelineTracker() {
       }
       return asset;
     });
+    
     setAssets(newAssets);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 2000);
   };
 
   const addNoteToAsset = (assetId, noteText) => {
@@ -1081,6 +1173,8 @@ export default function PipelineTracker() {
     };
     
     setAssetNotes(newAssetNotes);
+    setShowSyncNotification(true);
+    setTimeout(() => setShowSyncNotification(false), 2000);
   };
 
   const filteredAssets = useMemo(() => {
@@ -1161,6 +1255,14 @@ export default function PipelineTracker() {
 
   return (
     <div className={`h-screen flex flex-col ${darkMode ? 'bg-gray-900 text-white' : 'bg-gradient-to-br from-purple-50 to-blue-50'}`}>
+      {/* Notificació de sincronització */}
+      {showSyncNotification && (
+        <SyncNotification 
+          darkMode={darkMode} 
+          onDismiss={() => setShowSyncNotification(false)} 
+        />
+      )}
+      
       {/* HEADER */}
       <div className={`shadow-md flex-shrink-0 px-2 py-2 md:px-4 md:py-3 ${darkMode ? 'bg-gray-800' : 'bg-white'}`}>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-2">
@@ -1290,19 +1392,16 @@ export default function PipelineTracker() {
             const safeAsset = ensureStageDetails(asset);
             const isAdmin = currentUser === 'Admin' && isAdminAuthenticated;
             
-            // COMPROVAR SI L'USUARI ACTUAL ESTÀ ASSIGNAT COM A ARTISTA
             const isAssigned = asset.stages?.some(stage => {
               const stageDetail = safeAsset.stageDetails[stage];
               return stageDetail && stageDetail.assignedTo === currentUser;
             }) || false;
             
-            // COMPROVAR SI L'USUARI ACTUAL ÉS REVIEWER
             const isReviewer = asset.stages?.some(stage => {
               const stageDetail = safeAsset.stageDetails[stage];
               return stageDetail && stageDetail.reviewer === currentUser;
             }) || false;
             
-            // COMPROVAR SI L'USUARI ACTUAL TÉ ETAPES PENDENTS DE REVISIÓ
             const hasPendingReviews = asset.stages?.some(stage => {
               const stageDetail = safeAsset.stageDetails[stage];
               if (!stageDetail) return false;
@@ -1313,27 +1412,21 @@ export default function PipelineTracker() {
             
             const hasActiveIssues = asset.issues?.some(issue => !issue.resolved);
             
-            // Comprovar si totes les etapes estan done
             const allStagesDone = asset.stages?.every(stage => {
               const stageDetail = safeAsset.stageDetails[stage];
               return stageDetail?.status === 'done';
             }) || false;
             
-            // Obtenir notes d'aquest asset
             const assetNotesList = assetNotes[asset.id] || [];
             
-            // DETERMINAR EL COLOR DEL BORDA SEGONS EL ROL DE L'USUARI
             let borderStyle = '';
             if (isAssigned && isReviewer) {
-              // Si és tant assignat com reviewer (cas especial)
               borderStyle = 'border-double border-4 border-gradient-to-r from-blue-500 to-yellow-500';
             } else if (isAssigned) {
-              // Si està assignat com a artista - BLUE
               borderStyle = darkMode 
                 ? 'border-4 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)]' 
                 : 'border-4 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.3)]';
             } else if (isReviewer && hasPendingReviews) {
-              // Si és reviewer i té revisions pendents - YELLOW
               borderStyle = darkMode 
                 ? 'border-4 border-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.5)]' 
                 : 'border-4 border-yellow-500 shadow-[0_0_15px_rgba(245,158,11,0.3)]';
@@ -1460,7 +1553,6 @@ export default function PipelineTracker() {
                       const isAssignedToThisStage = stageAssignedTo === currentUser;
                       const isReviewerOfThisStage = stageReviewer === currentUser;
                       
-                      // COMPROVAR SI L'ETAPA ÉS "DONE" - BLOQUEJAR PER ARTISTA
                       const isDone = stageStatus === 'done';
                       const shouldBeLockedForArtist = isDone && isAssignedToThisStage && !isAdmin;
                       
@@ -1503,10 +1595,8 @@ export default function PipelineTracker() {
                                   
                                   if (!isAssignedToThisStage && !isReviewerOfThisStage) return null;
                                   
-                                  // Artista només pot posar: todo, wip, review
                                   if (isAssignedToThisStage && ['cancelled', 'needs_fix', 'done'].includes(key)) return null;
                                   
-                                  // Reviewer només pot posar: review, needs_fix, done
                                   if (isReviewerOfThisStage && !['review', 'needs_fix', 'done'].includes(key)) return null;
                                   
                                   if (isStageLocked && !isReviewerOfThisStage) return null;
@@ -1524,7 +1614,7 @@ export default function PipelineTracker() {
                             )}
                           </div>
                           
-                          {/* ASSIGNAT - ILUMINAT SI ÉS L'USUARI ACTUAL */}
+                          {/* ASSIGNAT */}
                           <div className="text-[10px]">
                             {isAdmin ? (
                               <select
@@ -1554,7 +1644,7 @@ export default function PipelineTracker() {
                             )}
                           </div>
                           
-                          {/* REVIEWER - ILUMINAT SI ÉS L'USUARI ACTUAL */}
+                          {/* REVIEWER */}
                           <div className="text-[10px]">
                             {isAdmin ? (
                               <select
@@ -1617,7 +1707,6 @@ export default function PipelineTracker() {
                             </div>
                           )}
                           
-                          {/* MISSATGE SI ESTÀ BLOQUEJAT PER ARTISTA */}
                           {shouldBeLockedForArtist && (
                             <div className={`text-[8px] text-center mt-1 px-1 py-0.5 rounded ${
                               darkMode ? 'bg-gray-700 text-gray-400' : 'bg-gray-100 text-gray-500'
@@ -1631,7 +1720,7 @@ export default function PipelineTracker() {
                   </div>
                 </div>
                 
-                {/* NOTES PER A L'ASSET - SOTA DE LES ETAPES */}
+                {/* NOTES */}
                 <AssetNotesSection
                   assetId={asset.id}
                   assetType={asset.type}
@@ -1641,7 +1730,7 @@ export default function PipelineTracker() {
                   darkMode={darkMode}
                 />
                 
-                {/* COMENTARIS I PROBLEMES (només per admins o usuaris assignats) */}
+                {/* COMENTARIS I PROBLEMES */}
                 {(isAdmin || isAssigned || isReviewer) && (
                   <div className="px-3 pb-3">
                     {asset.comments && asset.comments.length > 0 && (
@@ -1689,7 +1778,6 @@ export default function PipelineTracker() {
             if (editingAsset) {
               updateAsset(editingAsset.id, data);
             } else {
-              // Només admin pot crear nous assets
               if (currentUser === 'Admin' && isAdminAuthenticated) {
                 createAsset(data);
               } else {
@@ -1729,66 +1817,7 @@ export default function PipelineTracker() {
   );
 }
 
-// Component per notes d'asset
-function AssetNotesSection({ assetId, assetType, notes, currentUser, onAddNote, darkMode }) {
-  const [newNote, setNewNote] = useState('');
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (newNote.trim()) {
-      onAddNote(assetId, newNote);
-      setNewNote('');
-    }
-  };
-
-  // Filtrar notes per aquest assetType específic
-  const filteredNotes = notes.filter(note => note.type === assetType);
-
-  return (
-    <div className={`p-3 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'}`}>
-      <h4 className={`font-semibold mb-2 text-sm flex items-center gap-2 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-        📝 Notes per {assetType}
-      </h4>
-      
-      <div className="space-y-2 mb-3 max-h-40 overflow-y-auto">
-        {filteredNotes.map((note, index) => (
-          <div key={index} className={`p-2 rounded text-sm ${darkMode ? 'bg-gray-700' : 'bg-gray-100'}`}>
-            <div className="flex justify-between items-start mb-1">
-              <span className={`font-semibold ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>{note.user}</span>
-              <span className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                {new Date(note.timestamp).toLocaleString('ca-ES')}
-              </span>
-            </div>
-            <p className={darkMode ? 'text-gray-300' : 'text-gray-700'}>{note.text}</p>
-          </div>
-        ))}
-        {filteredNotes.length === 0 && (
-          <p className={`text-center py-2 text-xs ${darkMode ? 'text-gray-500' : 'text-gray-400'}`}>
-            No hi ha notes per aquest {assetType.toLowerCase()}
-          </p>
-        )}
-      </div>
-
-      <form onSubmit={handleSubmit} className="flex gap-2">
-        <input
-          type="text"
-          value={newNote}
-          onChange={(e) => setNewNote(e.target.value)}
-          placeholder={`Escriu una nota per aquest ${assetType.toLowerCase()}...`}
-          className={`flex-1 px-3 py-2 border rounded text-sm ${darkMode ? 'bg-gray-700 border-gray-600 text-white placeholder-gray-400' : 'bg-white'}`}
-        />
-        <button
-          type="submit"
-          className="bg-blue-500 text-white px-3 py-2 rounded hover:bg-blue-600 flex items-center gap-1"
-          title="Enviar nota"
-        >
-          <Send size={14} />
-        </button>
-      </form>
-    </div>
-  );
-}
-
+// Component Modal d'Asset
 function AssetModal({ asset, users, roles, onClose, onSave, darkMode, currentUser, isAdminAuthenticated }) {
   const [formData, setFormData] = useState({
     name: asset?.name || '',
