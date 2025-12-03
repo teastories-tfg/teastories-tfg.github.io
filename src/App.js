@@ -16,7 +16,7 @@ const STATUSES = {
 };
 
 // Contrasenya per l'admin (pots canviar-la)
-const ADMIN_PASSWORD = 'admin123';
+const ADMIN_PASSWORD = 'Udolf67';
 
 const calculateDaysRemaining = (deadline) => {
   if (!deadline) return null;
@@ -616,9 +616,12 @@ function AdminLogin({ onLogin, darkMode }) {
           </div>
         </form>
         
+        // Simplemente elimina o comenta esa línea en tu App.js
+        {/* 
         <p className={`text-xs text-center mt-4 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
           Contrasenya per defecte: <code className="bg-gray-200 dark:bg-gray-700 px-1 py-0.5 rounded">admin123</code>
         </p>
+        */}
       </div>
     </div>
   );

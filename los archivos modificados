@@ -1,0 +1,189 @@
+[1mdiff --git a/package-lock.json b/package-lock.json[m
+[1mindex 5d249f3..ff71c49 100644[m
+[1m--- a/package-lock.json[m
+[1m+++ b/package-lock.json[m
+[36m@@ -1,21 +1,21 @@[m
+ {[m
+[31m-  "name": "pipeline-tracker",[m
+[31m-  "version": "1.0.0",[m
+[32m+[m[32m  "name": "mi-proyecto",[m
+[32m+[m[32m  "version": "0.1.0",[m
+   "lockfileVersion": 3,[m
+   "requires": true,[m
+   "packages": {[m
+     "": {[m
+[31m-      "name": "pipeline-tracker",[m
+[31m-      "version": "1.0.0",[m
+[32m+[m[32m      "name": "mi-proyecto",[m
+[32m+[m[32m      "version": "0.1.0",[m
+       "license": "ISC",[m
+       "dependencies": {[m
+[31m-        "lucide-react": "^0.263.1",[m
+[31m-        "react": "^18.3.1",[m
+[31m-        "react-dom": "^18.3.1"[m
+[32m+[m[32m        "lucide-react": "^0.555.0",[m
+[32m+[m[32m        "react": "^18.2.0",[m
+[32m+[m[32m        "react-dom": "^18.2.0"[m
+       },[m
+       "devDependencies": {[m
+[31m-        "gh-pages": "^5.0.0",[m
+[31m-        "react-scripts": "5.0.1"[m
+[32m+[m[32m        "gh-pages": "^6.3.0",[m
+[32m+[m[32m        "react-scripts": "^5.0.1"[m
+       }[m
+     },[m
+     "node_modules/@alloc/quick-lru": {[m
+[36m@@ -4747,16 +4747,6 @@[m
+         "node": ">=8"[m
+       }[m
+     },[m
+[31m-    "node_modules/array-uniq": {[m
+[31m-      "version": "1.0.3",[m
+[31m-      "resolved": "https://registry.npmjs.org/array-uniq/-/array-uniq-1.0.3.tgz",[m
+[31m-      "integrity": "sha512-MNha4BWQ6JbwhFhj03YK552f7cb3AzoE8SzeljgChvL1dl3IcvggXVz1DilzySZkCja+CXuZbdW7yATchWn8/Q==",[m
+[31m-      "dev": true,[m
+[31m-      "license": "MIT",[m
+[31m-      "engines": {[m
+[31m-        "node": ">=0.10.0"[m
+[31m-      }[m
+[31m-    },[m
+     "node_modules/array.prototype.findlast": {[m
+       "version": "1.2.5",[m
+       "resolved": "https://registry.npmjs.org/array.prototype.findlast/-/array.prototype.findlast-1.2.5.tgz",[m
+[36m@@ -8728,38 +8718,18 @@[m
+       }[m
+     },[m
+     "node_modules/fs-extra": {[m
+[31m-      "version": "8.1.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-8.1.0.tgz",[m
+[31m-      "integrity": "sha512-yhlQgA6mnOJUKOsRUFsgJdQCvkKhcz8tlZG5HBQfReYZy46OwLcY+Zia0mtdHsOo9y/hP+CxMN0TU9QxoOtG4g==",[m
+[32m+[m[32m      "version": "11.3.2",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/fs-extra/-/fs-extra-11.3.2.tgz",[m
+[32m+[m[32m      "integrity": "sha512-Xr9F6z6up6Ws+NjzMCZc6WXg2YFRlrLP9NQDO3VQrWrfiojdhS56TzueT88ze0uBdCTwEIhQ3ptnmKeWGFAe0A==",[m
+       "dev": true,[m
+       "license": "MIT",[m
+       "dependencies": {[m
+         "graceful-fs": "^4.2.0",[m
+[31m-        "jsonfile": "^4.0.0",[m
+[31m-        "universalify": "^0.1.0"[m
+[32m+[m[32m        "jsonfile": "^6.0.1",[m
+[32m+[m[32m        "universalify": "^2.0.0"[m
+       },[m
+       "engines": {[m
+[31m-        "node": ">=6 <7 || >=8"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/fs-extra/node_modules/jsonfile": {[m
+[31m-      "version": "4.0.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/jsonfile/-/jsonfile-4.0.0.tgz",[m
+[31m-      "integrity": "sha512-m6F1R3z8jjlf2imQHS2Qez5sjKWQzbuuhuJ/FKYFRZvPE3PuHcSMVZzfsLhGVOkfd20obL5SWEBew5ShlquNxg==",[m
+[31m-      "dev": true,[m
+[31m-      "license": "MIT",[m
+[31m-      "optionalDependencies": {[m
+[31m-        "graceful-fs": "^4.1.6"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/fs-extra/node_modules/universalify": {[m
+[31m-      "version": "0.1.2",[m
+[31m-      "resolved": "https://registry.npmjs.org/universalify/-/universalify-0.1.2.tgz",[m
+[31m-      "integrity": "sha512-rBJeI5CXAlmy1pV+617WB9J63U6XcazHHF2f2dbJix4XzpUF0RS3Zbj0FGIOCAva5P/d/GBOYaACQ1w+0azUkg==",[m
+[31m-      "dev": true,[m
+[31m-      "license": "MIT",[m
+[31m-      "engines": {[m
+[31m-        "node": ">= 4.0.0"[m
+[32m+[m[32m        "node": ">=14.14"[m
+       }[m
+     },[m
+     "node_modules/fs-monkey": {[m
+[36m@@ -8950,19 +8920,19 @@[m
+       }[m
+     },[m
+     "node_modules/gh-pages": {[m
+[31m-      "version": "5.0.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/gh-pages/-/gh-pages-5.0.0.tgz",[m
+[31m-      "integrity": "sha512-Nqp1SjkPIB94Xw/3yYNTUL+G2dxlhjvv1zeN/4kMC1jfViTEqhtVz/Ba1zSXHuvXCN9ADNS1dN4r5/J/nZWEQQ==",[m
+[32m+[m[32m      "version": "6.3.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/gh-pages/-/gh-pages-6.3.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-Ot5lU6jK0Eb+sszG8pciXdjMXdBJ5wODvgjR+imihTqsUWF2K6dJ9HST55lgqcs8wWcw6o6wAsUzfcYRhJPXbA==",[m
+       "dev": true,[m
+       "license": "MIT",[m
+       "dependencies": {[m
+         "async": "^3.2.4",[m
+[31m-        "commander": "^2.18.0",[m
+[32m+[m[32m        "commander": "^13.0.0",[m
+         "email-addresses": "^5.0.0",[m
+         "filenamify": "^4.3.0",[m
+         "find-cache-dir": "^3.3.1",[m
+[31m-        "fs-extra": "^8.1.0",[m
+[31m-        "globby": "^6.1.0"[m
+[32m+[m[32m        "fs-extra": "^11.1.1",[m
+[32m+[m[32m        "globby": "^11.1.0"[m
+       },[m
+       "bin": {[m
+         "gh-pages": "bin/gh-pages.js",[m
+[36m@@ -8972,34 +8942,14 @@[m
+         "node": ">=10"[m
+       }[m
+     },[m
+[31m-    "node_modules/gh-pages/node_modules/array-union": {[m
+[31m-      "version": "1.0.2",[m
+[31m-      "resolved": "https://registry.npmjs.org/array-union/-/array-union-1.0.2.tgz",[m
+[31m-      "integrity": "sha512-Dxr6QJj/RdU/hCaBjOfxW+q6lyuVE6JFWIrAUpuOOhoJJoQ99cUn3igRaHVB5P9WrgFVN0FfArM3x0cueOU8ng==",[m
+[31m-      "dev": true,[m
+[31m-      "license": "MIT",[m
+[31m-      "dependencies": {[m
+[31m-        "array-uniq": "^1.0.1"[m
+[31m-      },[m
+[31m-      "engines": {[m
+[31m-        "node": ">=0.10.0"[m
+[31m-      }[m
+[31m-    },[m
+[31m-    "node_modules/gh-pages/node_modules/globby": {[m
+[31m-      "version": "6.1.0",[m
+[31m-      "resolved": "https://registry.npmjs.org/globby/-/globby-6.1.0.tgz",[m
+[31m-      "integrity": "sha512-KVbFv2TQtbzCoxAnfD6JcHZTYCzyliEaaeM/gH8qQdkKr5s0OP9scEgvdcngyk7AVdY6YVW/TJHd+lQ/Df3Daw==",[m
+[32m+[m[32m    "node_modules/gh-pages/node_modules/commander": {[m
+[32m+[m[32m      "version": "13.1.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/commander/-/commander-13.1.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-/rFeCpNJQbhSZjGVwO9RFV3xPqbnERS8MmIQzCtD/zl6gpJuV/bMLuN92oG3F7d8oDEHHRrujSXNUr8fpjntKw==",[m
+       "dev": true,[m
+       "license": "MIT",[m
+[31m-      "dependencies": {[m
+[31m-        "array-union": "^1.0.1",[m
+[31m-        "glob": "^7.0.3",[m
+[31m-        "object-assign": "^4.0.1",[m
+[31m-        "pify": "^2.0.0",[m
+[31m-        "pinkie-promise": "^2.0.0"[m
+[31m-      },[m
+       "engines": {[m
+[31m-        "node": ">=0.10.0"[m
+[32m+[m[32m        "node": ">=18"[m
+       }[m
+     },[m
+     "node_modules/glob": {[m
+[36m@@ -11875,12 +11825,12 @@[m
+       }[m
+     },[m
+     "node_modules/lucide-react": {[m
+[31m-      "version": "0.263.1",[m
+[31m-      "resolved": "https://registry.npmjs.org/lucide-react/-/lucide-react-0.263.1.tgz",[m
+[31m-      "integrity": "sha512-keqxAx97PlaEN89PXZ6ki1N8nRjGWtDa4021GFYLNj0RgruM5odbpl8GHTExj0hhPq3sF6Up0gnxt6TSHu+ovw==",[m
+[32m+[m[32m      "version": "0.555.0",[m
+[32m+[m[32m      "resolved": "https://registry.npmjs.org/lucide-react/-/lucide-react-0.555.0.tgz",[m
+[32m+[m[32m      "integrity": "sha512-D8FvHUGbxWBRQM90NZeIyhAvkFfsh3u9ekrMvJ30Z6gnpBHS6HC6ldLg7tL45hwiIz/u66eKDtdA23gwwGsAHA==",[m
+       "license": "ISC",[m
+       "peerDependencies": {[m
+[31m-        "react": "^16.5.1 || ^17.0.0 || ^18.0.0"[m
+[32m+[m[32m        "react": "^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0"[m
+       }[m
+     },[m
+     "node_modules/magic-string": {[m
+[36m@@ -12784,29 +12734,6 @@[m
+         "node": ">=0.10.0"[m
+       }[m
+     },[m
+[31m-    "node_modules/pinkie": {[m
+[31m-      "version": "2.0.4",[m
+[31m-      "resolved": "https://registry.npmjs.org/pinkie/-/pinkie-2.0.4.tgz",[m
+[31m-      "integrity": "sha512-MnUuEycAemtSaeFSjXKW/aroV7akBbY+Sv+RkyqFjgAe73F+MR0TBWKBRDkmfWq/HiFmdavfZ1G7h4SPZXaCSg==",[m
+[3
